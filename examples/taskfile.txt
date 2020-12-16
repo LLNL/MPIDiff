@@ -1,0 +1,2 @@
+0 ../build/bin/MPIDiff_Program1 -multiprogid 1
+1 ../build/bin/MPIDiff_Program2 -multiprogid 2

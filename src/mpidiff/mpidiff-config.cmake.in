@@ -1,0 +1,13 @@
+######################################################################################
+# Copyright 2019-2020 Lawrence Livermore National Security, LLC and other CARE developers.
+# See the top-level LICENSE file for details.
+#
+# SPDX-License-Identifier: BSD-3-Clause
+######################################################################################
+
+set(MPIDIFF_INSTALL_PREFIX @CMAKE_INSTALL_PREFIX@)
+set(MPIDIFF_INCLUDE_DIRS @CMAKE_INSTALL_PREFIX@/include)
+set(MPIDIFF_LIB_DIR @CMAKE_INSTALL_PREFIX@/lib)
+set(MPIDIFF_CMAKE_DIR @CMAKE_INSTALL_PREFIX@/share/mpidiff/cmake)
+
+include(@CMAKE_INSTALL_PREFIX@/share/mpidiff/cmake/mpidiff-targets.cmake)
