@@ -10,16 +10,18 @@ cmake_minimum_required(VERSION 3.4)
 project(mpidiff)
 
 ################################
+# Requirements
+################################
+set(ENABLE_MPI ON CACHE BOOL "Enable MPI")
+
+################################
 # Options
 ################################
+set(BLT_CXX_STD "c++11" CACHE STRING "c++ standard")
+
 option(ENABLE_TESTS "Enable MPIDiff tests" ON)
 option(ENABLE_DOCS "Enable MPIDiff documentation" ON)
 option(ENABLE_EXAMPLES "Enable MPIDiff examples" ON)
-
-################################
-# Set up variables and flags
-################################
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
 ################################
 # BLT
