@@ -1,5 +1,5 @@
 ######################################################################################
-# Copyright 2019-2020 Lawrence Livermore National Security, LLC and other MPIDiff developers.
+# Copyright 2024 Lawrence Livermore National Security, LLC and other MPIDiff developers.
 # See the top-level LICENSE file for details.
 #
 # SPDX-License-Identifier: BSD-3-Clause
@@ -9,44 +9,22 @@
 # Set up CMake
 ##########################################################################
 
-cmake_minimum_required(VERSION 3.14)
+cmake_minimum_required(VERSION 3.14 FATAL_ERROR)
 
 ##########################################################################
-# Set up project
+# Set up package
 ##########################################################################
 
-project(MPIDiff
-        LANGUAGES CXX
-        VERSION 0.1.10)
-
-include(${PROJECT_SOURCE_DIR}/cmake/Setup.cmake)
-
-################################
-# Set up library
-################################
-
-add_subdirectory(src)
+@PACKAGE_INIT@
 
 ##########################################################################
-# Set up tests
+# Set up targets
 ##########################################################################
 
-if(MPIDIFF_ENABLE_TESTS)
-   add_subdirectory(test)
-endif()
+include("${CMAKE_CURRENT_LIST_DIR}/mpidiff-targets.cmake")
 
 ##########################################################################
-# Set up documentation
+# Check required components
 ##########################################################################
 
-if(MPIDIFF_ENABLE_DOCS)
-   add_subdirectory(docs)
-endif()
-
-##########################################################################
-# Set up examples
-##########################################################################
-
-if(MPIDIFF_ENABLE_EXAMPLES)
-   add_subdirectory(examples)
-endif()
+check_required_components(mpidiff)
