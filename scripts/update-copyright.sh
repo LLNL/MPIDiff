@@ -46,6 +46,10 @@ grep -rl "the MPIDiff LICENSE file" . --exclude-dir=.git --exclude-dir=tpl --exc
 for i in `cat files2change`
 do
     echo $i
+    # Update copyright when there is only a single year (e.g. 2024)
+    cp $i $i.sed.bak
+    sed "s/Copyright (c) \([0-9]\{4\}\),/Copyright (c) \1-24,/" $i.sed.bak > $i
+    # Update copyright when there is a range of years (e.g. 2019-24)
     cp $i $i.sed.bak
     sed "s/Copyright (c) \([0-9]\{4\}\)-[0-9]\{2\},/Copyright (c) \1-24,/" $i.sed.bak > $i
 done
