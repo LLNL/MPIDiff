@@ -18,7 +18,12 @@ NOCOLOR="\033[0m"
 
 files_no_license=$(grep -rL "the MPIDiff LICENSE file" . \
    --exclude-dir=.git \
-   --exclude-dir=tpl)
+   --exclude-dir=tpl \
+   --exclude=LICENSE \
+   --exclude=NOTICE \
+   --exclude=taskfile.txt \
+   --exclude=.gitignore \
+   --exclude=.gitmodules)
 
 if [ $files_no_license ]; then
   print "${RED} [!] Some files are missing license text: ${NOCOLOR}"
