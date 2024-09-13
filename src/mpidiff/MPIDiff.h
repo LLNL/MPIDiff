@@ -231,7 +231,7 @@ class MPIDiff {
                        BinaryPredicate predicate, TToString toString) {
          // Check that we are in a valid state
          if (!Initialized()) {
-            std::cerr << "[MPIDiff] MPIDiff::Init must be called before MPIDiff::Diff. Unable to perform diffs!" << std::endl;
+            std::cerr << "[MPIDiff] MPIDiff::Init must be called before MPIDiff::Diff. Unable to perform diffs!\n";
             return;
          }
 
@@ -328,12 +328,14 @@ class MPIDiff {
       ///
       /////////////////////////////////////////////////////////////////////////
       template <class T, class BinaryPredicate, class TToString>
-      static void DiffUpdate(std::size_t size, T* data, const std::string& key,
+      static bool DiffUpdate(std::size_t size, T* data, const std::string& key,
                              BinaryPredicate predicate, TToString toString) {
+         bool hasDiffs = false;
+
          // Check that we are in a valid state
          if (!Initialized()) {
-            std::cerr << "[MPIDiff] MPIDiff::Init must be called before MPIDiff::Diff. Unable to perform diffs!" << std::endl;
-            return;
+            std::cerr << "[MPIDiff] MPIDiff::Init must be called before MPIDiff::Diff. Unable to perform diffs!\n";
+            return hasDiffs;
          }
 
          // Set up communication information
@@ -402,14 +404,18 @@ class MPIDiff {
             // Overwrite my data with my partner's data to avoid compounding
             // differences over time.
             for (std::size_t i = 0; i < size; ++i) {
+               if (!predicate(data[i], receivedData[i])) {
+                  hasDiffs = true;
+               }
+
                data[i] = receivedData[i];
             }
          }
          else {
             // Perform the diff
-            Default_diff(Get_program_id(), size, data,
-                         Get_partner_program_id(), size, receivedData,
-                         key, predicate, toString);
+            hasDiffs = Default_diff(Get_program_id(), size, data,
+                                    Get_partner_program_id(), size, receivedData,
+                                    key, predicate, toString);
          }
 
          // Clean up
@@ -417,6 +423,8 @@ class MPIDiff {
          free(receivedKeyData);
          free(recvMessage);
          free(sendMessage);
+
+         return hasDiffs;
       }
 
       /////////////////////////////////////////////////////////////////////////
@@ -714,33 +722,39 @@ class MPIDiff {
       ///
       /////////////////////////////////////////////////////////////////////////
       template <class T, class BinaryPredicate, class TToString>
-      static void Default_diff(int program1ID, int size1, const T* data1,
+      static bool Default_diff(int program1ID, int size1, const T* data1,
                                int program2ID, int /* size2 */, const T* data2,
                                std::string key, BinaryPredicate predicate,
                                TToString toString) {
+         bool hasDiffs = false;
+
          std::ofstream& s_outputFile = Get_output_file();
 
          bool firstError = true;
 
          for (int i = 0; i < size1; ++i) {
             if (!predicate(data1[i], data2[i])) {
+               hasDiffs = true;
+
                if (firstError) {
-                  s_outputFile << "Key " << key << std::endl
+                  s_outputFile << "Key " << key << "\n"
                                << "Index, "
                                << "Program " << program1ID << ", "
-                               << "Program " << program2ID << std::endl;
+                               << "Program " << program2ID << "\n";
                   firstError = false;
                }
 
                s_outputFile << i << ", "
                             << toString(data1[i]) << ", "
-                            << toString(data2[i]) << std::endl;
+                            << toString(data2[i]) << "\n";
             }
          }
 
          if (!firstError) {
             s_outputFile << std::endl;
          }
+
+         return hasDiffs;
       }
 
       /////////////////////////////////////////////////////////////////////////
