@@ -1,9 +1,9 @@
-######################################################################################
-# Copyright 2024 Lawrence Livermore National Security, LLC and other MPIDiff developers.
-# See the top-level LICENSE file for details.
+##########################################################################
+# Copyright (c) 2024, Lawrence Livermore National Security, LLC and
+# MPIDiff project contributors. See the MPIDiff LICENSE file for details.
 #
 # SPDX-License-Identifier: BSD-3-Clause
-######################################################################################
+##########################################################################
 
 if(NOT BLT_LOADED)
    if(BLT_SOURCE_DIR)

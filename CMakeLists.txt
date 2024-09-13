@@ -1,9 +1,9 @@
-######################################################################################
-# Copyright 2019-2020 Lawrence Livermore National Security, LLC and other MPIDiff developers.
-# See the top-level LICENSE file for details.
+##########################################################################
+# Copyright (c) 2019-24, Lawrence Livermore National Security, LLC and
+# MPIDiff project contributors. See the MPIDiff LICENSE file for details.
 #
 # SPDX-License-Identifier: BSD-3-Clause
-######################################################################################
+##########################################################################
 
 ##########################################################################
 # Set up CMake
@@ -17,7 +17,7 @@ cmake_minimum_required(VERSION 3.14)
 
 project(MPIDiff
         LANGUAGES C CXX
-        VERSION 0.1.10)
+        VERSION 0.2.0)
 
 include(${PROJECT_SOURCE_DIR}/cmake/Setup.cmake)
 

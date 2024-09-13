@@ -1,9 +1,9 @@
-######################################################################################
-# Copyright 2019-2020 Lawrence Livermore National Security, LLC and other CARE developers.
-# See the top-level LICENSE file for details.
+##########################################################################
+# Copyright (c) 2019-24, Lawrence Livermore National Security, LLC and
+# MPIDiff project contributors. See the MPIDiff LICENSE file for details.
 #
 # SPDX-License-Identifier: BSD-3-Clause
-#######################################################################################
+##########################################################################
 
 # Doxyfile 1.8.5
 
@@ -45,7 +45,7 @@ PROJECT_NAME           = "MPIDiff"
 # could be handy for archiving the generated documentation or if some version
 # control system is used.
 
-PROJECT_NUMBER         = 0.0.40
+PROJECT_NUMBER         = 0.2.0
 
 # Using the PROJECT_BRIEF tag one can provide an optional one line description
 # for a project that appears at the top of each page and should give viewer a
