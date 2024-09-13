@@ -93,6 +93,23 @@ class MPIDiff {
       ///
       /// @author Alan Dayton
       ///
+      /// @brief Add annotation to the MPIDiff output file.
+      ///
+      /// This is useful for providing context as to where diffs first appear.
+      /// For example, if a function is called repeatedly you could add a
+      /// static counter to the function and use that to annotate the MPIDiff
+      /// output file. Then you know exactly which call to the function first
+      /// produced diffs.
+      ///
+      /// @arg[in]  annotation  String to write to the MPIDiff output file
+      ///
+      /////////////////////////////////////////////////////////////////////////
+      static void Annotate(const std::string& annotation);
+
+      /////////////////////////////////////////////////////////////////////////
+      ///
+      /// @author Alan Dayton
+      ///
       /// @brief Set message handler.
       ///
       /// @arg[in] handler Function to call when message tags match
