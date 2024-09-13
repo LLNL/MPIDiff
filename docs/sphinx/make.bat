@@ -1,9 +1,9 @@
-REM ######################################################################################
-REM # Copyright 2019-2020 Lawrence Livermore National Security, LLC and other CARE developers.
-REM # See the top-level LICENSE file for details.
+REM ##########################################################################
+REM # Copyright (c) 2019-24, Lawrence Livermore National Security, LLC and
+REM # MPIDiff project contributors. See the MPIDiff LICENSE file for details.
 REM #
 REM # SPDX-License-Identifier: BSD-3-Clause
-REM ######################################################################################
+REM ##########################################################################
 
 @ECHO OFF
 
