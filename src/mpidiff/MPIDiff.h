@@ -325,13 +325,17 @@ class MPIDiff {
       /// @arg[in] predicate   The binary predicate for comparing elements of data
       /// @arg[in] toString    The function for converting a value to a string
       ///
+      /// @return  true if there are diffs, false otherwise
+      ///
       /////////////////////////////////////////////////////////////////////////
       template <class T, class BinaryPredicate, class TToString>
-      static void DiffUpdate(std::size_t size, T* data, const std::string& key,
+      static bool DiffUpdate(std::size_t size, T* data, const std::string& key,
                              BinaryPredicate predicate, TToString toString) {
+         bool hasDiffs = false;
+
          // Check that we are in a valid state
          if (!Initialized()) {
-            return;
+            return hasDiffs;
          }
 
          // Set up communication information
@@ -400,14 +404,18 @@ class MPIDiff {
             // Overwrite my data with my partner's data to avoid compounding
             // differences over time.
             for (std::size_t i = 0; i < size; ++i) {
+               if (!predicate(data[i], receivedData[i])) {
+                  hasDiffs = true;
+               }
+
                data[i] = receivedData[i];
             }
          }
          else {
             // Perform the diff
-            Default_diff(Get_program_id(), size, data,
-                         Get_partner_program_id(), size, receivedData,
-                         key, predicate, toString);
+            hasDiffs = Default_diff(Get_program_id(), size, data,
+                                    Get_partner_program_id(), size, receivedData,
+                                    key, predicate, toString);
          }
 
          // Clean up
@@ -415,6 +423,8 @@ class MPIDiff {
          free(receivedKeyData);
          free(recvMessage);
          free(sendMessage);
+
+         return hasDiffs;
       }
 
       /////////////////////////////////////////////////////////////////////////
@@ -429,11 +439,13 @@ class MPIDiff {
       /// @arg[in] data   Data to communicate
       /// @arg[in] key    String used as a key for pairing messages
       ///
+      /// @return  true if there are diffs, false otherwise
+      ///
       /////////////////////////////////////////////////////////////////////////
       template <class T>
-      static inline void DiffUpdate(std::size_t size, T* data,
+      static inline bool DiffUpdate(std::size_t size, T* data,
                                     const std::string& key) {
-         DiffUpdate(size, data, key, std::equal_to<T>{}, MPIDiff::to_string<T>{});
+         return DiffUpdate(size, data, key, std::equal_to<T>{}, MPIDiff::to_string<T>{});
       }
 
       // TODO: Investigate setting a default tolerance for floats and doubles.
@@ -451,12 +463,14 @@ class MPIDiff {
       /// @arg[in] key         String used as a key for pairing messages
       /// @arg[in] tolerance   The tolerance for comparing elements of data
       ///
+      /// @return  true if there are diffs, false otherwise
+      ///
       /////////////////////////////////////////////////////////////////////////
       template <class T>
-      static inline void DiffUpdate(std::size_t size, T* data,
+      static inline bool DiffUpdate(std::size_t size, T* data,
                                     const std::string& key,
                                     T tolerance) {
-         DiffUpdate(size, data, key,
+         return DiffUpdate(size, data, key,
               [=] (const T& value1, const T& value2) {
                  return std::abs(value2 - value1) <= tolerance;
               },
@@ -476,12 +490,14 @@ class MPIDiff {
       /// @arg[in] key         String used as a key for pairing messages
       /// @arg[in] predicate   The binary predicate for comparing elements of data
       ///
+      /// @return  true if there are diffs, false otherwise
+      ///
       /////////////////////////////////////////////////////////////////////////
       template <class T, class BinaryPredicate>
-      static inline void DiffUpdate(std::size_t size, T* data,
+      static inline bool DiffUpdate(std::size_t size, T* data,
                                     const std::string& key,
                                     BinaryPredicate predicate) {
-         DiffUpdate(size, data, key, predicate, MPIDiff::to_string<T>{});
+         return DiffUpdate(size, data, key, predicate, MPIDiff::to_string<T>{});
       }
 
       /////////////////////////////////////////////////////////////////////////
@@ -712,33 +728,39 @@ class MPIDiff {
       ///
       /////////////////////////////////////////////////////////////////////////
       template <class T, class BinaryPredicate, class TToString>
-      static void Default_diff(int program1ID, int size1, const T* data1,
+      static bool Default_diff(int program1ID, int size1, const T* data1,
                                int program2ID, int /* size2 */, const T* data2,
                                std::string key, BinaryPredicate predicate,
                                TToString toString) {
+         bool hasDiffs = false;
+
          std::ofstream& s_outputFile = Get_output_file();
 
          bool firstError = true;
 
          for (int i = 0; i < size1; ++i) {
             if (!predicate(data1[i], data2[i])) {
+               hasDiffs = true;
+
                if (firstError) {
-                  s_outputFile << "Key " << key << std::endl
+                  s_outputFile << "Key " << key << "\n"
                                << "Index, "
                                << "Program " << program1ID << ", "
-                               << "Program " << program2ID << std::endl;
+                               << "Program " << program2ID << "\n";
                   firstError = false;
                }
 
                s_outputFile << i << ", "
                             << toString(data1[i]) << ", "
-                            << toString(data2[i]) << std::endl;
+                            << toString(data2[i]) << "\n";
             }
          }
 
          if (!firstError) {
             s_outputFile << std::endl;
          }
+
+         return hasDiffs;
       }
 
       /////////////////////////////////////////////////////////////////////////
