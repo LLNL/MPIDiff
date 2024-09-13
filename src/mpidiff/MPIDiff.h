@@ -231,7 +231,7 @@ class MPIDiff {
                        BinaryPredicate predicate, TToString toString) {
          // Check that we are in a valid state
          if (!Initialized()) {
-            std::cerr << "[MPIDiff] MPIDiff::Init must be called before MPIDiff::Diff. Unable to perform diffs!\n";
+            std::cerr << "[MPIDiff] MPIDiff::Init must be called before MPIDiff::Diff. Unable to perform diffs!" << std::endl;
             return;
          }
 
@@ -334,7 +334,7 @@ class MPIDiff {
 
          // Check that we are in a valid state
          if (!Initialized()) {
-            std::cerr << "[MPIDiff] MPIDiff::Init must be called before MPIDiff::Diff. Unable to perform diffs!\n";
+            std::cerr << "[MPIDiff] MPIDiff::Init must be called before MPIDiff::Diff. Unable to perform diffs!" << std::endl;
             return hasDiffs;
          }
 
