@@ -54,7 +54,7 @@ echo LICENSE
 cp LICENSE LICENSE.sed.bak
 sed "s/Copyright (c) \([0-9]\{4\}\)-[0-9]\{4\}/Copyright (c) \1-2024/" LICENSE.sed.bak > LICENSE
 
-for i in README.md CONTRIBUTING.md
+for i in README.md
 do 
     echo $i
     cp $i $i.sed.bak
