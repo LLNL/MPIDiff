@@ -16,7 +16,7 @@ cmake_minimum_required(VERSION 3.14)
 ##########################################################################
 
 project(MPIDiff
-        LANGUAGES CXX
+        LANGUAGES C CXX
         VERSION 0.1.10)
 
 include(${PROJECT_SOURCE_DIR}/cmake/Setup.cmake)
