@@ -326,6 +326,8 @@ class MPIDiff {
       /// @arg[in] predicate   The binary predicate for comparing elements of data
       /// @arg[in] toString    The function for converting a value to a string
       ///
+      /// @return  true if there are diffs, false otherwise
+      ///
       /////////////////////////////////////////////////////////////////////////
       template <class T, class BinaryPredicate, class TToString>
       static bool DiffUpdate(std::size_t size, T* data, const std::string& key,
@@ -439,11 +441,13 @@ class MPIDiff {
       /// @arg[in] data   Data to communicate
       /// @arg[in] key    String used as a key for pairing messages
       ///
+      /// @return  true if there are diffs, false otherwise
+      ///
       /////////////////////////////////////////////////////////////////////////
       template <class T>
-      static inline void DiffUpdate(std::size_t size, T* data,
+      static inline bool DiffUpdate(std::size_t size, T* data,
                                     const std::string& key) {
-         DiffUpdate(size, data, key, std::equal_to<T>{}, MPIDiff::to_string<T>{});
+         return DiffUpdate(size, data, key, std::equal_to<T>{}, MPIDiff::to_string<T>{});
       }
 
       // TODO: Investigate setting a default tolerance for floats and doubles.
@@ -461,12 +465,14 @@ class MPIDiff {
       /// @arg[in] key         String used as a key for pairing messages
       /// @arg[in] tolerance   The tolerance for comparing elements of data
       ///
+      /// @return  true if there are diffs, false otherwise
+      ///
       /////////////////////////////////////////////////////////////////////////
       template <class T>
-      static inline void DiffUpdate(std::size_t size, T* data,
+      static inline bool DiffUpdate(std::size_t size, T* data,
                                     const std::string& key,
                                     T tolerance) {
-         DiffUpdate(size, data, key,
+         return DiffUpdate(size, data, key,
               [=] (const T& value1, const T& value2) {
                  return std::abs(value2 - value1) <= tolerance;
               },
@@ -486,12 +492,14 @@ class MPIDiff {
       /// @arg[in] key         String used as a key for pairing messages
       /// @arg[in] predicate   The binary predicate for comparing elements of data
       ///
+      /// @return  true if there are diffs, false otherwise
+      ///
       /////////////////////////////////////////////////////////////////////////
       template <class T, class BinaryPredicate>
-      static inline void DiffUpdate(std::size_t size, T* data,
+      static inline bool DiffUpdate(std::size_t size, T* data,
                                     const std::string& key,
                                     BinaryPredicate predicate) {
-         DiffUpdate(size, data, key, predicate, MPIDiff::to_string<T>{});
+         return DiffUpdate(size, data, key, predicate, MPIDiff::to_string<T>{});
       }
 
       /////////////////////////////////////////////////////////////////////////
