@@ -1,10 +1,10 @@
 <!--
-######################################################################################
-# Copyright 2019-2020 Lawrence Livermore National Security, LLC and other CARE developers.
-# See the top-level LICENSE file for details.
+##########################################################################
+# Copyright (c) 2019-24, Lawrence Livermore National Security, LLC and
+# MPIDiff project contributors. See the MPIDiff LICENSE file for details.
 #
 # SPDX-License-Identifier: BSD-3-Clause
-######################################################################################
+##########################################################################
 -->
 
 # MPIDiff
@@ -27,8 +27,10 @@ Many libraries, such as RAJA and CHAI, provide powerful abstractions for writing
 ```bash
 git clone ssh://git@rz-bitbucket.llnl.gov:7999/mpidiff/mpidiff.git
 cd mpidiff
+git submodule update --init --recursive
 mkdir build && cd build
-cmake -DENABLE_MPI=ON -DBLT_SOURCE_DIR=<path/to/blt> ../
+cmake ../
+make
 ```
 
 ## Usage

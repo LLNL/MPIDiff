@@ -1,9 +1,9 @@
-//////////////////////////////////////////////////////////////////////////////////////
-// Copyright 2019-2020 Lawrence Livermore National Security, LLC and other CARE developers.
-// See the top-level LICENSE file for details.
+//////////////////////////////////////////////////////////////////////////
+// Copyright (c) 2019-24, Lawrence Livermore National Security, LLC and
+// MPIDiff project contributors. See the MPIDiff LICENSE file for details.
 //
 // SPDX-License-Identifier: BSD-3-Clause
-//////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////
 
 // Standard library headers
 #include <cstdlib>
@@ -32,7 +32,6 @@ static int m_debugRank;
 
 static int m_multiProgramNumRanks;
 static int m_programNumRanks;
-static int m_debugNumRanks;
 
 static int m_partnerMultiProgramRank;
 static int m_partnerProgramRank;
@@ -140,7 +139,7 @@ void MPIDiff::Init(const MPI_Comm multiProgramCommunicator, int programID) {
                                  m_multiProgramCommunicator));
 
    // Make a list of ranks with my program ID
-   int m_programNumRanks = 0;
+   m_programNumRanks = 0;
    int* ranksWithMyProgramID = (int*) allocateMemory(m_multiProgramNumRanks * sizeof(int));
 
    bool multiplePrograms = false;
@@ -255,6 +254,28 @@ void MPIDiff::Init(const MPI_Comm multiProgramCommunicator, int programID) {
 /////////////////////////////////////////////////////////////////////////
 bool MPIDiff::Initialized() {
    return m_initialized;
+}
+
+/////////////////////////////////////////////////////////////////////////
+///
+/// @author Alan Dayton
+///
+/// @brief Add annotation to the MPIDiff output file.
+///
+/// This is useful for providing context as to where diffs first appear.
+/// For example, if a function is called repeatedly you could add a
+/// static counter to the function and use that to annotate the MPIDiff
+/// output file. Then you know exactly which call to the function first
+/// produced diffs.
+///
+/// @arg[in]  annotation  String to write to the MPIDiff output file
+///
+/////////////////////////////////////////////////////////////////////////
+void MPIDiff::Annotate(const std::string& annotation) {
+   if (Get_debug_rank() < Get_partner_debug_rank()) {
+      std::ofstream& s_outputFile = Get_output_file();
+      s_outputFile << annotation << "\n";
+   }
 }
 
 /////////////////////////////////////////////////////////////////////////

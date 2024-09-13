@@ -210,9 +210,9 @@ class MPIMinimalistPrinter : public ::testing::EmptyTestEventListener
         MPI_Send(&resultFileNameSize, 1, MPI_INT, 0, rank, comm);
         MPI_Send(&resultLineNumber, 1, MPI_INT, 0, rank, comm);
         MPI_Send(&resultSummarySize, 1, MPI_INT, 0, rank, comm);
-        MPI_Send(resultFileName.c_str(), resultFileNameSize, MPI_CHAR,
+        MPI_Send(resultFileName.data(), resultFileNameSize, MPI_CHAR,
                  0, rank, comm);
-        MPI_Send(resultSummary.c_str(), resultSummarySize, MPI_CHAR,
+        MPI_Send(resultSummary.data(), resultSummarySize, MPI_CHAR,
                  0, rank, comm);
       }
     } else {
@@ -395,9 +395,9 @@ virtual void OnTestPartResult
         MPI_Send(&resultFileNameSize, 1, MPI_INT, 0, rank, comm);
         MPI_Send(&resultLineNumber, 1, MPI_INT, 0, rank, comm);
         MPI_Send(&resultMessageSize, 1, MPI_INT, 0, rank, comm);
-        MPI_Send(resultFileName.c_str(), resultFileNameSize, MPI_CHAR,
+        MPI_Send(resultFileName.data(), resultFileNameSize, MPI_CHAR,
                  0, rank, comm);
-        MPI_Send(resultMessage.c_str(), resultMessageSize, MPI_CHAR,
+        MPI_Send(resultMessage.data(), resultMessageSize, MPI_CHAR,
                  0, rank, comm);
       }
     } else {

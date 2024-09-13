@@ -1,9 +1,9 @@
-//////////////////////////////////////////////////////////////////////////////////////
-// Copyright 2019-2020 Lawrence Livermore National Security, LLC and other CARE developers.
-// See the top-level LICENSE file for details.
+//////////////////////////////////////////////////////////////////////////
+// Copyright (c) 2019-24, Lawrence Livermore National Security, LLC and
+// MPIDiff project contributors. See the MPIDiff LICENSE file for details.
 //
 // SPDX-License-Identifier: BSD-3-Clause
-//////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////
 
 #ifndef MULTI_PROGRAM_DEBUG_H_
 #define MULTI_PROGRAM_DEBUG_H_
@@ -88,6 +88,23 @@ class MPIDiff {
       ///
       /////////////////////////////////////////////////////////////////////////
       static bool Initialized();
+
+      /////////////////////////////////////////////////////////////////////////
+      ///
+      /// @author Alan Dayton
+      ///
+      /// @brief Add annotation to the MPIDiff output file.
+      ///
+      /// This is useful for providing context as to where diffs first appear.
+      /// For example, if a function is called repeatedly you could add a
+      /// static counter to the function and use that to annotate the MPIDiff
+      /// output file. Then you know exactly which call to the function first
+      /// produced diffs.
+      ///
+      /// @arg[in]  annotation  String to write to the MPIDiff output file
+      ///
+      /////////////////////////////////////////////////////////////////////////
+      static void Annotate(const std::string& annotation);
 
       /////////////////////////////////////////////////////////////////////////
       ///
@@ -214,7 +231,6 @@ class MPIDiff {
                        BinaryPredicate predicate, TToString toString) {
          // Check that we are in a valid state
          if (!Initialized()) {
-            std::cerr << "[MPIDiff] MPIDiff::Init must be called before MPIDiff::Diff. Unable to perform diffs!" << std::endl;
             return;
          }
 
@@ -235,7 +251,7 @@ class MPIDiff {
          if (Get_debug_rank() > partner) {
             // Build the message
             std::memcpy(message, &keyEntryLength, sizeEntryLength);
-            std::memcpy(message + sizeEntryLength, key.data(), keyEntryLength); 
+            std::memcpy(message + sizeEntryLength, key.data(), keyEntryLength);
             std::memcpy(message + sizeEntryLength + keyEntryLength, &dataEntryLength, sizeEntryLength);
             std::memcpy(message + sizeEntryLength + keyEntryLength + sizeEntryLength, data, dataEntryLength);
 
@@ -244,8 +260,7 @@ class MPIDiff {
          }
          else {
             // Receive the message
-            MPI_Status status;
-            MPI_ERROR_CHECK(MPI_Recv(message, totalLength, MPI_CHAR, partner, tag, comm, &status));
+            MPI_ERROR_CHECK(MPI_Recv(message, totalLength, MPI_CHAR, partner, tag, comm, MPI_STATUS_IGNORE));
 
             // Extract the key from the message
             std::size_t receivedKeySize;
@@ -294,6 +309,195 @@ class MPIDiff {
 
          // Clean up
          free(message);
+      }
+
+      /////////////////////////////////////////////////////////////////////////
+      ///
+      /// @author Alan Dayton
+      ///
+      /// @brief Blocking diff with debug neighbor. Compares elements using
+      ///        the given binary predicate. Then updates the array of the
+      ///        higher MPI rank so that differences do not compound.
+      ///
+      /// @arg[in] size        Number of elements in array
+      /// @arg[in] data        Data to communicate
+      /// @arg[in] key         String used as a key for pairing messages
+      /// @arg[in] predicate   The binary predicate for comparing elements of data
+      /// @arg[in] toString    The function for converting a value to a string
+      ///
+      /// @return  true if there are diffs, false otherwise
+      ///
+      /////////////////////////////////////////////////////////////////////////
+      template <class T, class BinaryPredicate, class TToString>
+      static bool DiffUpdate(std::size_t size, T* data, const std::string& key,
+                             BinaryPredicate predicate, TToString toString) {
+         bool hasDiffs = false;
+
+         // Check that we are in a valid state
+         if (!Initialized()) {
+            return hasDiffs;
+         }
+
+         // Set up communication information
+         const int partner = Get_partner_debug_rank();
+         MPI_Comm comm = Get_debug_communicator();
+         std::size_t hashCode = std::hash<std::string>{}(key);
+         std::size_t tag = hashCode % Get_max_debug_tag();
+
+         // The actual message will be of the form [keyLength, key, dataLength, data]
+         const std::size_t sizeEntryLength = sizeof(std::size_t);
+         const std::size_t keyEntryLength = key.size();
+         const std::size_t dataEntryLength = size * sizeof(T);
+         const std::size_t totalLength = sizeEntryLength + keyEntryLength + sizeEntryLength + dataEntryLength;
+
+         // Allocate space for receive buffer
+         char* recvMessage = (char*) malloc(totalLength);
+
+         // Set up send message
+         char* sendMessage = (char*) malloc(totalLength);
+         std::memcpy(sendMessage, &keyEntryLength, sizeEntryLength);
+         std::memcpy(sendMessage + sizeEntryLength, key.data(), keyEntryLength);
+         std::memcpy(sendMessage + sizeEntryLength + keyEntryLength, &dataEntryLength, sizeEntryLength);
+         std::memcpy(sendMessage + sizeEntryLength + keyEntryLength + sizeEntryLength, data, dataEntryLength);
+
+         MPI_ERROR_CHECK(MPI_Sendrecv(sendMessage, totalLength, MPI_CHAR,
+                                      partner, tag, recvMessage, totalLength,
+                                      MPI_CHAR, partner, tag, comm,
+                                      MPI_STATUS_IGNORE));
+
+         // Check if the message is what we are expecting
+         std::size_t receivedKeySize;
+         std::memcpy(&receivedKeySize, recvMessage, sizeEntryLength);
+
+         char* receivedKeyData = (char*) malloc(receivedKeySize);
+         std::memcpy(receivedKeyData, recvMessage + sizeEntryLength, receivedKeySize);
+         std::string receivedKey(receivedKeyData, keyEntryLength);
+
+         // Check if there is a hash or tag collision
+         if (key != receivedKey) {
+            std::size_t receivedHashCode = std::hash<std::string>{}(receivedKey);
+
+            if (hashCode == receivedHashCode) {
+               std::cerr << "[MPIDiff] Hash collision! Both " << key << " and "
+                         << receivedKey << " have the same hash value: " << hashCode
+                         << std::endl;
+
+               MPI_Abort(comm, MPI_ERR_TAG);
+            }
+            else {
+               std::cerr << "[MPIDiff] Tag collision! Both " << key << " and "
+                         << receivedKey << " have the same tag value: " << tag
+                         << std::endl;
+
+               MPI_Abort(comm, MPI_ERR_TAG);
+            }
+         }
+
+         // Extract the data from the message
+         std::size_t receivedDataSize;
+         std::memcpy(&receivedDataSize, recvMessage + sizeEntryLength + receivedKeySize, sizeEntryLength);
+
+         T* receivedData = (T*) malloc(receivedDataSize);
+         std::memcpy(receivedData, recvMessage + sizeEntryLength + receivedKeySize + sizeEntryLength, receivedDataSize);
+
+         if (Get_debug_rank() > partner) {
+            // Overwrite my data with my partner's data to avoid compounding
+            // differences over time.
+            for (std::size_t i = 0; i < size; ++i) {
+               if (!predicate(data[i], receivedData[i])) {
+                  hasDiffs = true;
+               }
+
+               data[i] = receivedData[i];
+            }
+         }
+         else {
+            // Perform the diff
+            hasDiffs = Default_diff(Get_program_id(), size, data,
+                                    Get_partner_program_id(), size, receivedData,
+                                    key, predicate, toString);
+         }
+
+         // Clean up
+         free(receivedData);
+         free(receivedKeyData);
+         free(recvMessage);
+         free(sendMessage);
+
+         return hasDiffs;
+      }
+
+      /////////////////////////////////////////////////////////////////////////
+      ///
+      /// @author Alan Dayton
+      ///
+      /// @brief Blocking diff with debug neighbor. Compares elements using
+      ///        the std::equal_to<T> function object. Then updates the array
+      ///        of the higher MPI rank so that differences do not compound.
+      ///
+      /// @arg[in] size   Number of elements in array
+      /// @arg[in] data   Data to communicate
+      /// @arg[in] key    String used as a key for pairing messages
+      ///
+      /// @return  true if there are diffs, false otherwise
+      ///
+      /////////////////////////////////////////////////////////////////////////
+      template <class T>
+      static inline bool DiffUpdate(std::size_t size, T* data,
+                                    const std::string& key) {
+         return DiffUpdate(size, data, key, std::equal_to<T>{}, MPIDiff::to_string<T>{});
+      }
+
+      // TODO: Investigate setting a default tolerance for floats and doubles.
+
+      /////////////////////////////////////////////////////////////////////////
+      ///
+      /// @author Alan Dayton
+      ///
+      /// @brief Blocking diff with debug neighbor. Compares elements using
+      ///        the given tolerance. Then updates the array of the higher
+      ///        MPI rank so that differences do not compound.
+      ///
+      /// @arg[in] size        Number of elements in array
+      /// @arg[in] data        Data to communicate
+      /// @arg[in] key         String used as a key for pairing messages
+      /// @arg[in] tolerance   The tolerance for comparing elements of data
+      ///
+      /// @return  true if there are diffs, false otherwise
+      ///
+      /////////////////////////////////////////////////////////////////////////
+      template <class T>
+      static inline bool DiffUpdate(std::size_t size, T* data,
+                                    const std::string& key,
+                                    T tolerance) {
+         return DiffUpdate(size, data, key,
+              [=] (const T& value1, const T& value2) {
+                 return std::abs(value2 - value1) <= tolerance;
+              },
+              MPIDiff::to_string<T>{});
+      }
+
+      /////////////////////////////////////////////////////////////////////////
+      ///
+      /// @author Alan Dayton
+      ///
+      /// @brief Blocking diff with debug neighbor. Compares elements using
+      ///        the given binary predicate. Then updates the array of the
+      ///        higher MPI rank so that differences do not compound.
+      ///
+      /// @arg[in] size        Number of elements in array
+      /// @arg[in] data        Data to communicate
+      /// @arg[in] key         String used as a key for pairing messages
+      /// @arg[in] predicate   The binary predicate for comparing elements of data
+      ///
+      /// @return  true if there are diffs, false otherwise
+      ///
+      /////////////////////////////////////////////////////////////////////////
+      template <class T, class BinaryPredicate>
+      static inline bool DiffUpdate(std::size_t size, T* data,
+                                    const std::string& key,
+                                    BinaryPredicate predicate) {
+         return DiffUpdate(size, data, key, predicate, MPIDiff::to_string<T>{});
       }
 
       /////////////////////////////////////////////////////////////////////////
@@ -524,33 +728,39 @@ class MPIDiff {
       ///
       /////////////////////////////////////////////////////////////////////////
       template <class T, class BinaryPredicate, class TToString>
-      static void Default_diff(int program1ID, int size1, const T* data1,
-                               int program2ID, int size2, const T* data2,
+      static bool Default_diff(int program1ID, int size1, const T* data1,
+                               int program2ID, int /* size2 */, const T* data2,
                                std::string key, BinaryPredicate predicate,
                                TToString toString) {
+         bool hasDiffs = false;
+
          std::ofstream& s_outputFile = Get_output_file();
 
          bool firstError = true;
 
          for (int i = 0; i < size1; ++i) {
             if (!predicate(data1[i], data2[i])) {
+               hasDiffs = true;
+
                if (firstError) {
-                  s_outputFile << "Key " << key << std::endl
+                  s_outputFile << "Key " << key << "\n"
                                << "Index, "
                                << "Program " << program1ID << ", "
-                               << "Program " << program2ID << std::endl;
+                               << "Program " << program2ID << "\n";
                   firstError = false;
                }
 
                s_outputFile << i << ", "
                             << toString(data1[i]) << ", "
-                            << toString(data2[i]) << std::endl;
+                            << toString(data2[i]) << "\n";
             }
          }
 
          if (!firstError) {
             s_outputFile << std::endl;
          }
+
+         return hasDiffs;
       }
 
       /////////////////////////////////////////////////////////////////////////
