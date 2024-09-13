@@ -715,7 +715,7 @@ class MPIDiff {
       /////////////////////////////////////////////////////////////////////////
       template <class T, class BinaryPredicate, class TToString>
       static void Default_diff(int program1ID, int size1, const T* data1,
-                               int program2ID, int size2, const T* data2,
+                               int program2ID, int /* size2 */, const T* data2,
                                std::string key, BinaryPredicate predicate,
                                TToString toString) {
          std::ofstream& s_outputFile = Get_output_file();

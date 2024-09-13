@@ -32,7 +32,6 @@ static int m_debugRank;
 
 static int m_multiProgramNumRanks;
 static int m_programNumRanks;
-static int m_debugNumRanks;
 
 static int m_partnerMultiProgramRank;
 static int m_partnerProgramRank;
@@ -140,7 +139,7 @@ void MPIDiff::Init(const MPI_Comm multiProgramCommunicator, int programID) {
                                  m_multiProgramCommunicator));
 
    // Make a list of ranks with my program ID
-   int m_programNumRanks = 0;
+   m_programNumRanks = 0;
    int* ranksWithMyProgramID = (int*) allocateMemory(m_multiProgramNumRanks * sizeof(int));
 
    bool multiplePrograms = false;
