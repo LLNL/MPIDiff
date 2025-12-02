@@ -233,11 +233,6 @@ class MPIDiff {
          if (!Initialized()) {
             return false;
          }
-         static int numCalls = 0;
-         // print a message for tracing purposes
-         std::cerr << "[MPIDiff] Trace: Diff quick1Fix1_mpidiff call " << numCalls << " with key=\"" << key  <<
-         " size " << size << std::endl;
-         numCalls += 1;
 
          // Set up communication information
          const int partner = Get_partner_debug_rank();
