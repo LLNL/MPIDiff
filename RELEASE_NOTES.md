@@ -12,6 +12,11 @@ in this file.
 
 The format of this file is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
+## [Version 0.2.1] - Release date 2025-12-02
+
+### Changed
+- MPIDiff::Diff now returns a boolean based off whether there was a difference, similar to MPIDiff::DiffUpdate
+
 ## [Version 0.2.0] - Release date 2024-09-13
 
 ### Added

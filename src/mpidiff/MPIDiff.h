@@ -164,8 +164,8 @@ class MPIDiff {
       ///
       /////////////////////////////////////////////////////////////////////////
       template <class T>
-      static inline void Diff(int size, const T* data, const std::string& key) {
-         Diff(size, data, key, std::equal_to<T>{}, MPIDiff::to_string<T>{});
+      static inline bool Diff(int size, const T* data, const std::string& key) {
+         return Diff(size, data, key, std::equal_to<T>{}, MPIDiff::to_string<T>{});
       }
 
       // TODO: Investigate setting a default tolerance for floats and doubles.
@@ -184,9 +184,9 @@ class MPIDiff {
       ///
       /////////////////////////////////////////////////////////////////////////
       template <class T>
-      static inline void Diff(int size, const T* data, const std::string& key,
+      static inline bool Diff(int size, const T* data, const std::string& key,
                               T tolerance) {
-         Diff(size, data, key,
+         return Diff(size, data, key,
               [=] (const T& value1, const T& value2) {
                  return std::abs(value2 - value1) <= tolerance;
               },
@@ -207,9 +207,9 @@ class MPIDiff {
       ///
       /////////////////////////////////////////////////////////////////////////
       template <class T, class BinaryPredicate>
-      static inline void Diff(int size, const T* data, const std::string& key,
+      static inline bool Diff(int size, const T* data, const std::string& key,
                               BinaryPredicate predicate) {
-         Diff(size, data, key, predicate, MPIDiff::to_string<T>{});
+         return Diff(size, data, key, predicate, MPIDiff::to_string<T>{});
       }
 
       /////////////////////////////////////////////////////////////////////////
@@ -227,11 +227,11 @@ class MPIDiff {
       ///
       /////////////////////////////////////////////////////////////////////////
       template <class T, class BinaryPredicate, class TToString>
-      static void Diff(int size, const T* data, const std::string& key,
+      static bool Diff(int size, const T* data, const std::string& key,
                        BinaryPredicate predicate, TToString toString) {
          // Check that we are in a valid state
          if (!Initialized()) {
-            return;
+            return false;
          }
 
          // Set up communication information
@@ -247,6 +247,8 @@ class MPIDiff {
          const std::size_t totalLength = sizeEntryLength + keyEntryLength + sizeEntryLength + dataEntryLength;
 
          char* message = (char*) malloc(totalLength);
+
+         bool has_diff = false;
 
          if (Get_debug_rank() > partner) {
             // Build the message
@@ -298,7 +300,7 @@ class MPIDiff {
             std::memcpy(receivedData, message + sizeEntryLength + receivedKeySize + sizeEntryLength, receivedDataSize);
 
             // Perform the diff
-            Default_diff(Get_program_id(), size, data,
+            has_diff = Default_diff(Get_program_id(), size, data,
                          Get_partner_program_id(), size, receivedData,
                          key, predicate, toString);
 
@@ -309,6 +311,7 @@ class MPIDiff {
 
          // Clean up
          free(message);
+         return has_diff;
       }
 
       /////////////////////////////////////////////////////////////////////////
